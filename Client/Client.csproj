@@ -13,7 +13,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Apache.NMS.ActiveMQ" Version="2.1.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.6.2" />

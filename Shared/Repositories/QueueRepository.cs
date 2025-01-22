@@ -1,9 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Shared.DAL;
+﻿using Apache.NMS;
+using Apache.NMS.ActiveMQ;
 using Shared.Models;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 
@@ -11,89 +9,91 @@ namespace Shared.Repositories;
 
 public class QueueRepository : IQueueRepository
 {
-    private readonly IConfiguration _configuration;
+    private readonly string _brokerUri = "tcp://localhost:61616";
+    private readonly string _clientQueueName = "ClientQueue";
+    private readonly string _serverQueueName = "ServerQueue";
 
-    public QueueRepository(IConfiguration configuration)
+    public async Task<ClientQueueEntity> GetMessageFromClientQueueAsync()
     {
-        _configuration = configuration;
-    }
+        var factory = new ConnectionFactory(_brokerUri);
 
+        using (var connection = factory.CreateConnection()) {
 
-    public async Task<ClientQueueEntity> GetMessageFromClientQueue()
-    {
-        await using QueueDbContext context = GetContext();
+            using var session = connection.CreateSession(AcknowledgementMode.AutoAcknowledge);
+            IDestination destination = session.GetQueue(_clientQueueName);
 
-        await using var transaction = await context.Database.BeginTransactionAsync();
+            using var consumer = session.CreateConsumer(destination);
+            connection.Start();
 
-        try
-        {
-            var item = await context.ClientQueue
-                .Where(q => q.QueueStatus == QueueStatus.New)
-                .OrderBy(q => q.Created)
-                .FirstOrDefaultAsync();
-
-            if (item == null)
+            var message = await consumer.ReceiveAsync(TimeSpan.FromSeconds(10)) as ITextMessage;
+            if (message != null)
             {
-                await transaction.RollbackAsync();
-                return null;
+                return System.Text.Json.JsonSerializer.Deserialize<ClientQueueEntity>(message.Text);
             }
 
-            // Update the item's QueueStatus and StatusDate
-            item.QueueStatus = QueueStatus.Processed;
-            item.StatusDate = DateTime.Now;
-
-            // Save changes to the database
-            await context.SaveChangesAsync();
-
-            // Commit the transaction
-            await transaction.CommitAsync();
-
-            return item;
-        }
-        catch (Exception)
-        {
-            // Rollback the transaction in case of an error
-            await transaction.RollbackAsync();
-            throw;
+            return null; // Handle appropriately if no message is found
         }
     }
-
-
-    public async Task<ServerQueueEntity> GetMessageFromServerQueueByCorrelationId(Guid correlationId)
-    {
-        await using QueueDbContext context = GetContext();
-
-        var item = await context.ServerQueue
-            .Where(q => q.CorrelationId == correlationId)
-            .FirstOrDefaultAsync();
-
-        if (item == null) return null;
-
-        var sql = $"update ServerQueue set QueueStatus = {(int)QueueStatus.Processed}, StatusDate = '{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}' where Id = '{item.Id}'";
-        var result = await context.Database.ExecuteSqlRawAsync(sql);
-        return item;
-    }
-
 
     public async Task<int> AddClientQueueItemAsync(ClientQueueEntity entity)
     {
-        var _context = GetContext();
-        _context.ClientQueue.Add(entity);
-        return await _context.SaveChangesAsync();
+        return await AddQueueItemAsync(_clientQueueName, entity);
     }
 
+    public async Task<ServerQueueEntity> GetMessageFromServerQueueByCorrelationIdAsync(Guid correlationId)
+    {
+        using var connection = CreateConnection();
+        using var session = connection.CreateSession(AcknowledgementMode.AutoAcknowledge);
+
+        string selector = $"CorrelationId = '{correlationId}'";
+        IDestination destination = session.GetQueue(_serverQueueName);
+
+        using var consumer = session.CreateConsumer(destination, selector);
+        connection.Start();
+
+        while (true)
+        {
+            var message = await consumer.ReceiveAsync(TimeSpan.FromSeconds(2)) as ITextMessage;
+            if (message != null)
+            {
+                var entity = System.Text.Json.JsonSerializer.Deserialize<ServerQueueEntity>(message.Text);
+                return entity;
+            }
+        }
+    }
 
     public async Task<int> AddServerQueueItemAsync(ServerQueueEntity entity)
     {
-        var _context = GetContext();
-        _context.ServerQueue.Add(entity);
-
-        return await _context.SaveChangesAsync();
+        return await AddQueueItemAsync(_serverQueueName, entity);
     }
 
-    private QueueDbContext GetContext()
+    private async Task<int> AddQueueItemAsync<T>(string queueName, T entity)
     {
-        return new QueueDbContext(_configuration.GetConnectionString("QueueDbConnection"));
+        using var connection = CreateConnection();
+        using var session = connection.CreateSession(AcknowledgementMode.AutoAcknowledge);
+        IDestination destination = session.GetQueue(queueName);
+
+        using var producer = session.CreateProducer(destination);
+        connection.Start();
+
+        var json = System.Text.Json.JsonSerializer.Serialize(entity);
+        var textMessage = session.CreateTextMessage(json);
+        var correlationIdProperty = typeof(T).GetProperty("CorrelationId");
+        if (correlationIdProperty != null)
+        {
+            var correlationIdValue = correlationIdProperty.GetValue(entity)?.ToString();
+            if (!string.IsNullOrEmpty(correlationIdValue))
+            {
+                textMessage.Properties["CorrelationId"] = correlationIdValue;
+            }
+        }
+        await Task.Run(() => producer.Send(textMessage));
+
+        return 1; // Return 1 to indicate success (can be adjusted)
+    }
+    private IConnection CreateConnection()
+    {
+        var factory = new ConnectionFactory(_brokerUri);
+        return factory.CreateConnection();
     }
 }
-

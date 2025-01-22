@@ -6,8 +6,8 @@ namespace Server.Interfaces
 {
     public interface IServerMessageHub
     {
-        Task CheckForNewClientMessage();
-        Task HandleMessageFromClient(ClientQueueEntity queuePackage);
-        Task SendMessageToClient(object message, Guid correlationId);
+        Task ListenForClientMessageAsync();
+        Task HandleMessageFromClientAsync(ClientQueueEntity queuePackage);
+        Task SendMessageToClientAsync(object message, Guid correlationId);
     }
 }

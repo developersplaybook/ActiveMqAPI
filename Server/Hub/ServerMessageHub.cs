@@ -1,5 +1,8 @@
-﻿using Apache.NMS;
-using Apache.NMS.AMQP;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Apache.NMS;
+using Apache.NMS.ActiveMQ;
 using Newtonsoft.Json;
 using Server.Interfaces;
 using Shared.Helpers;
@@ -7,43 +10,38 @@ using Shared.Models;
 using Shared.Repositories;
 using Shared.Requests;
 using Shared.Responses;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Server.Hub
 {
     public class ServerMessageHub : IServerMessageHub
     {
-        private readonly string _brokerUri = "amqp://localhost:5672"; // ActiveMQ AMQP URI
-        private readonly string _clientQueueName = "client-queue"; // Client's queue name
-        private readonly string _serverQueueName = "server-queue"; // Server's queue name
+        private readonly IQueueRepository _queueRepository;
+        private readonly ICompanyRepository _companyRepository;
+        private readonly ICarRepository _carRepository;
 
-        readonly ICompanyRepository _companyRepository;
-        readonly ICarRepository _carRepository;
-
-        public ServerMessageHub(ICompanyRepository companyRepository, ICarRepository carRepository)
+        public ServerMessageHub(IQueueRepository queueRepository, ICompanyRepository companyRepository, ICarRepository carRepository)
         {
+            _queueRepository = queueRepository;
             _companyRepository = companyRepository;
             _carRepository = carRepository;
         }
 
-        public async Task CheckForNewClientMessage()
+        public async Task ListenForClientMessageAsync()
         {
             while (true)
             {
-                var nextPackage = await ReceiveMessageFromActiveMQ(_clientQueueName);
-                if (nextPackage == null) break;
+                var clientMessage = await _queueRepository.GetMessageFromClientQueueAsync(); ;
+                if (clientMessage == null) break;
 
-                await HandleMessageFromClient(nextPackage);
+                await HandleMessageFromClientAsync(clientMessage);
             }
         }
 
-        public async Task HandleMessageFromClient(ClientQueueEntity queuePackage)
+        public async Task HandleMessageFromClientAsync(ClientQueueEntity clientMessage)
         {
-            string[] classNameParts = queuePackage.TypeName.Split('.');
+            string[] classNameParts = clientMessage.TypeName.Split('.');
             string simpleClassName = classNameParts[^1];
-            var requestMessage = JsonConvert.DeserializeObject(queuePackage.Content, Helpers.GetType(queuePackage.TypeName));
+            var requestMessage = JsonConvert.DeserializeObject(clientMessage.Content, Helpers.GetType(clientMessage.TypeName));
 
             Task<object> result = simpleClassName switch
             {
@@ -57,14 +55,14 @@ namespace Server.Hub
                 nameof(GetCompaniesRequest) => HandleGetCompaniesRequest((GetCompaniesRequest)requestMessage).ContinueWith(task => (object)task.Result),
                 nameof(UpdateCarRequest) => HandleUpdateCarRequest((UpdateCarRequest)requestMessage).ContinueWith(task => (object)task.Result),
                 nameof(UpdateCompanyRequest) => HandleUpdateCompanyRequest((UpdateCompanyRequest)requestMessage).ContinueWith(task => (object)task.Result),
-                _ => throw new NotSupportedException($"Request type {queuePackage.TypeName} is not supported.")
+                _ => throw new NotSupportedException($"Request type {clientMessage.TypeName} is not supported.")
             };
 
             object actualResult = await result;
-            await SendMessageToClient(actualResult, queuePackage.CorrelationId);
+            await SendMessageToClientAsync(actualResult, clientMessage.CorrelationId);
         }
 
-        public async Task SendMessageToClient(object message, Guid correlationId)
+        public async Task SendMessageToClientAsync(object message, Guid correlationId)
         {
             var result = Helpers.ConvertObjectToJson(message);
             var entity = new ServerQueueEntity
@@ -77,50 +75,54 @@ namespace Server.Hub
                 QueueStatus = QueueStatus.New
             };
 
-            // Send the response to the server queue using ActiveMQ
-            await SendMessageToActiveMQ(_serverQueueName, entity);
+            await _queueRepository.AddServerQueueItemAsync(entity);
+
         }
 
-        private async Task SendMessageToActiveMQ(string queueName, ServerQueueEntity entity)
-        {
-            var factory = new NmsConnectionFactory(_brokerUri);
-            using var connection = factory.CreateConnection();
-            using var session = connection.CreateSession();
-            IDestination destination = session.GetQueue(queueName);
+        //private async Task SendMessageToActiveMQ(string queueName, ServerQueueEntity entity)
+        //{
+        //    var factory = new ConnectionFactory(_brokerUri);
 
-            using (var producer = session.CreateProducer(destination))
-            {
-                var textMessage = session.CreateTextMessage(JsonConvert.SerializeObject(entity));
-                textMessage.Properties["CorrelationId"] = entity.CorrelationId.ToString();
-                producer.Send(textMessage);
-            }
-        }
+        //    using (var connection = factory.CreateConnection())
+        //    using (var session = connection.CreateSession())
+        //    {
+        //        var destination = session.GetQueue(queueName);
+        //        using (var producer = session.CreateProducer(destination))
+        //        {
+        //            var textMessage = session.CreateTextMessage(JsonConvert.SerializeObject(entity));
+        //            textMessage.Properties["CorrelationId"] = entity.CorrelationId.ToString();
+        //            producer.Send(textMessage);
+        //        }
+        //    }
+        //}
 
-        private async Task<ClientQueueEntity> ReceiveMessageFromActiveMQ(string queueName)
-        {
-            var factory = new NmsConnectionFactory(_brokerUri);
-            using var connection = factory.CreateConnection();
-            using var session = connection.CreateSession();
-            IDestination destination = session.GetQueue(queueName);
+        //private async Task<ClientQueueEntity> ReceiveMessageFromActiveMQ(string queueName)
+        //{
+        //    var factory = new ConnectionFactory(_brokerUri);
 
-            using (var consumer = session.CreateConsumer(destination))
-            {
-                connection.Start();
-                var message = consumer.Receive();
-                if (message is ITextMessage textMessage)
-                {
-                    var content = textMessage.Text;
-                    var correlationId = Guid.Parse(textMessage.Properties["CorrelationId"].ToString());
-                    return new ClientQueueEntity
-                    {
-                        CorrelationId = correlationId,
-                        Content = content,
-                        TypeName = textMessage.GetType().ToString()
-                    };
-                }
-                return null;
-            }
-        }
+        //    using (var connection = factory.CreateConnection())
+        //    using (var session = connection.CreateSession())
+        //    {
+        //        var destination = session.GetQueue(queueName);
+        //        using (var consumer = session.CreateConsumer(destination))
+        //        {
+        //            connection.Start();
+        //            var message = consumer.Receive();
+        //            if (message is ITextMessage textMessage)
+        //            {
+        //                var content = textMessage.Text;
+        //                var correlationId = Guid.Parse(textMessage.Properties["CorrelationId"].ToString());
+        //                return new ClientQueueEntity
+        //                {
+        //                    CorrelationId = correlationId,
+        //                    Content = content,
+        //                    TypeName = textMessage.GetType().ToString()
+        //                };
+        //            }
+        //            return null;
+        //        }
+        //    }
+        //}
 
         // Message Handlers
         private async Task<CreateCarResponse> HandleCreateCarRequest(CreateCarRequest request)

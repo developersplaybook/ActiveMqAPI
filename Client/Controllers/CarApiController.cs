@@ -31,8 +31,8 @@ namespace Client.Controllers
         public async Task<IActionResult> GetAllCars()
         {
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessage(new GetCarsRequest(), correlationId);
-            var getCarsResponse = await _clientMessageHub.ReceiveFromServerMessage<GetCarsResponse>(correlationId);
+            await _clientMessageHub.SendToServerMessageAsync(new GetCarsRequest(), correlationId);
+            var getCarsResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCarsResponse>(correlationId);
 
             return Ok(getCarsResponse.Cars);
         }
@@ -46,15 +46,15 @@ namespace Client.Controllers
             if (!ModelState.IsValid) return Ok(new { success = false });
 
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessage(new GetCarRequest(car.Id), correlationId);
-            var getCarResponse = await _clientMessageHub.ReceiveFromServerMessage<GetCarResponse>(correlationId);
+            await _clientMessageHub.SendToServerMessageAsync(new GetCarRequest(car.Id), correlationId);
+            var getCarResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCarResponse>(correlationId);
 
             var oldCar = getCarResponse.Car;
             oldCar.Online = car.Online;
 
             correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessage(new UpdateCarRequest(oldCar), correlationId);
-            var upadeCarResponse = await _clientMessageHub.ReceiveFromServerMessage<UpdateCarResponse>(correlationId);
+            await _clientMessageHub.SendToServerMessageAsync(new UpdateCarRequest(oldCar), correlationId);
+            var upadeCarResponse = await _clientMessageHub.ListenForServerMessageAsync<UpdateCarResponse>(correlationId);
 
             return Ok(new { success = true });
         }

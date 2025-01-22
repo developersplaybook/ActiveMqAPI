@@ -21,7 +21,7 @@ namespace Server.Services
             {
                 try
                 {
-                    await _serverMessageHub.CheckForNewClientMessage();
+                    await _serverMessageHub.ListenForClientMessageAsync();
 
                     await Task.Delay(100, stoppingToken);
                 }
