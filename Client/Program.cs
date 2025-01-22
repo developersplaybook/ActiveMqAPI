@@ -72,9 +72,6 @@ public class Program
         builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
 
-        builder.Services.AddDbContext<QueueDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("QueueDbConnection")));
-
         builder.Services.AddTransient<IQueueRepository, QueueRepository>();
         builder.Services.AddTransient<IClientMessageHub, ClientMessageHub>();
         builder.Services.AddSingleton<JobStatusManager>();
@@ -83,11 +80,6 @@ public class Program
         using (var scope = app.Services.GetService<IServiceScopeFactory>().CreateScope())
         {
             scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.EnsureCreated();
-            var context = scope.ServiceProvider.GetRequiredService<QueueDbContext>();
-
-            context.Database.EnsureCreated();
-            await context.Database.ExecuteSqlRawAsync("delete ClientQueue");
-            await context.Database.ExecuteSqlRawAsync("delete ServerQueue");
         }
 
         var envIsDevelopment = app.Environment.IsDevelopment();

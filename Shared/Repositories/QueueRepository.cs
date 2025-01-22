@@ -13,7 +13,7 @@ public class QueueRepository : IQueueRepository
     private readonly string _clientQueueName = "ClientQueue";
     private readonly string _serverQueueName = "ServerQueue";
 
-    public async Task<ClientQueueEntity> GetMessageFromClientQueueAsync()
+    public async Task<QueueEntity> GetMessageFromClientQueueAsync()
     {
         var factory = new ConnectionFactory(_brokerUri);
 
@@ -28,19 +28,19 @@ public class QueueRepository : IQueueRepository
             var message = await consumer.ReceiveAsync(TimeSpan.FromSeconds(10)) as ITextMessage;
             if (message != null)
             {
-                return System.Text.Json.JsonSerializer.Deserialize<ClientQueueEntity>(message.Text);
+                return System.Text.Json.JsonSerializer.Deserialize<QueueEntity>(message.Text);
             }
 
             return null; // Handle appropriately if no message is found
         }
     }
 
-    public async Task<int> AddClientQueueItemAsync(ClientQueueEntity entity)
+    public async Task<int> AddClientQueueItemAsync(QueueEntity entity)
     {
         return await AddQueueItemAsync(_clientQueueName, entity);
     }
 
-    public async Task<ServerQueueEntity> GetMessageFromServerQueueByCorrelationIdAsync(Guid correlationId)
+    public async Task<QueueEntity> GetMessageFromServerQueueByCorrelationIdAsync(Guid correlationId)
     {
         using var connection = CreateConnection();
         using var session = connection.CreateSession(AcknowledgementMode.AutoAcknowledge);
@@ -56,13 +56,13 @@ public class QueueRepository : IQueueRepository
             var message = await consumer.ReceiveAsync(TimeSpan.FromSeconds(2)) as ITextMessage;
             if (message != null)
             {
-                var entity = System.Text.Json.JsonSerializer.Deserialize<ServerQueueEntity>(message.Text);
+                var entity = System.Text.Json.JsonSerializer.Deserialize<QueueEntity>(message.Text);
                 return entity;
             }
         }
     }
 
-    public async Task<int> AddServerQueueItemAsync(ServerQueueEntity entity)
+    public async Task<int> AddServerQueueItemAsync(QueueEntity entity)
     {
         return await AddQueueItemAsync(_serverQueueName, entity);
     }

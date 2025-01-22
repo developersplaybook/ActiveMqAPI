@@ -7,7 +7,7 @@ namespace Server.Interfaces
     public interface IServerMessageHub
     {
         Task ListenForClientMessageAsync();
-        Task HandleMessageFromClientAsync(ClientQueueEntity queuePackage);
+        Task HandleMessageFromClientAsync(QueueEntity queuePackage);
         Task SendMessageToClientAsync(object message, Guid correlationId);
     }
 }

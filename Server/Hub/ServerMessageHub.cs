@@ -37,7 +37,7 @@ namespace Server.Hub
             }
         }
 
-        public async Task HandleMessageFromClientAsync(ClientQueueEntity clientMessage)
+        public async Task HandleMessageFromClientAsync(QueueEntity clientMessage)
         {
             string[] classNameParts = clientMessage.TypeName.Split('.');
             string simpleClassName = classNameParts[^1];
@@ -65,21 +65,20 @@ namespace Server.Hub
         public async Task SendMessageToClientAsync(object message, Guid correlationId)
         {
             var result = Helpers.ConvertObjectToJson(message);
-            var entity = new ServerQueueEntity
+            var entity = new QueueEntity
             {
                 CorrelationId = correlationId,
                 Content = result.Item1,
                 TypeName = result.Item2.ToString(),
                 Created = DateTime.Now,
                 StatusDate = DateTime.Now,
-                QueueStatus = QueueStatus.New
             };
 
             await _queueRepository.AddServerQueueItemAsync(entity);
 
         }
 
-        //private async Task SendMessageToActiveMQ(string queueName, ServerQueueEntity entity)
+        //private async Task SendMessageToActiveMQ(string queueName, QueueEntity entity)
         //{
         //    var factory = new ConnectionFactory(_brokerUri);
 

@@ -6,8 +6,8 @@ namespace Shared.Repositories;
 
 public interface IQueueRepository
 {
-    Task<ClientQueueEntity> GetMessageFromClientQueueAsync();
-    Task<ServerQueueEntity> GetMessageFromServerQueueByCorrelationIdAsync(Guid destinationServerQueueItemId);
-    Task<int> AddClientQueueItemAsync(ClientQueueEntity entity);
-    Task<int> AddServerQueueItemAsync(ServerQueueEntity entity);
+    Task<QueueEntity> GetMessageFromClientQueueAsync();
+    Task<QueueEntity> GetMessageFromServerQueueByCorrelationIdAsync(Guid destinationServerQueueItemId);
+    Task<int> AddClientQueueItemAsync(QueueEntity entity);
+    Task<int> AddServerQueueItemAsync(QueueEntity entity);
 }

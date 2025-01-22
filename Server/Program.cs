@@ -28,15 +28,6 @@ internal class Program
         using (var scope = app.Services.GetService<IServiceScopeFactory>().CreateScope())
         {
             scope.ServiceProvider.GetRequiredService<CarApiDbContext>().EnsureSeedData();
-
-            var database = scope.ServiceProvider.GetRequiredService<QueueDbContext>().Database;
-            database.EnsureCreated();
-
-            var sql = $"delete from ServerQueue";
-            await database.ExecuteSqlRawAsync(sql);
-
-            sql = $"delete from ClientQueue";
-            await database.ExecuteSqlRawAsync(sql);
         }
 
         await app.RunAsync();
@@ -51,10 +42,6 @@ internal class Program
             })
            .ConfigureServices(services =>
            {
-
-               services.AddDbContext<QueueDbContext>(options =>
-                    options.UseSqlServer(configuration.GetConnectionString("QueueDbConnection")));
-
                services.AddDbContext<CarApiDbContext>(options =>
                     options.UseSqlServer(configuration.GetConnectionString("CarApiConnection")));
 

@@ -25,7 +25,7 @@ namespace Client.Hub
             var result = Helpers.ConvertObjectToJson(message);
 
             // Create a client queue entity
-            var entity = new ClientQueueEntity
+            var entity = new QueueEntity
             {
                 Id = Guid.NewGuid(),
                 CorrelationId = correlationId,
@@ -33,7 +33,6 @@ namespace Client.Hub
                 TypeName = result.Item2.FullName,
                 Created = DateTime.Now,
                 StatusDate = DateTime.Now,
-                QueueStatus = QueueStatus.New
             };
 
             // Add the entity to the server queue
