@@ -1,15 +1,13 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Apache.NMS;
-using Apache.NMS.ActiveMQ;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Server.Interfaces;
 using Shared.Helpers;
 using Shared.Models;
 using Shared.Repositories;
 using Shared.Requests;
 using Shared.Responses;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Server.Hub
 {
@@ -77,51 +75,6 @@ namespace Server.Hub
             await _queueRepository.AddServerQueueItemAsync(entity);
 
         }
-
-        //private async Task SendMessageToActiveMQ(string queueName, QueueEntity entity)
-        //{
-        //    var factory = new ConnectionFactory(_brokerUri);
-
-        //    using (var connection = factory.CreateConnection())
-        //    using (var session = connection.CreateSession())
-        //    {
-        //        var destination = session.GetQueue(queueName);
-        //        using (var producer = session.CreateProducer(destination))
-        //        {
-        //            var textMessage = session.CreateTextMessage(JsonConvert.SerializeObject(entity));
-        //            textMessage.Properties["CorrelationId"] = entity.CorrelationId.ToString();
-        //            producer.Send(textMessage);
-        //        }
-        //    }
-        //}
-
-        //private async Task<ClientQueueEntity> ReceiveMessageFromActiveMQ(string queueName)
-        //{
-        //    var factory = new ConnectionFactory(_brokerUri);
-
-        //    using (var connection = factory.CreateConnection())
-        //    using (var session = connection.CreateSession())
-        //    {
-        //        var destination = session.GetQueue(queueName);
-        //        using (var consumer = session.CreateConsumer(destination))
-        //        {
-        //            connection.Start();
-        //            var message = consumer.Receive();
-        //            if (message is ITextMessage textMessage)
-        //            {
-        //                var content = textMessage.Text;
-        //                var correlationId = Guid.Parse(textMessage.Properties["CorrelationId"].ToString());
-        //                return new ClientQueueEntity
-        //                {
-        //                    CorrelationId = correlationId,
-        //                    Content = content,
-        //                    TypeName = textMessage.GetType().ToString()
-        //                };
-        //            }
-        //            return null;
-        //        }
-        //    }
-        //}
 
         // Message Handlers
         private async Task<CreateCarResponse> HandleCreateCarRequest(CreateCarRequest request)

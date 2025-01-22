@@ -8,11 +8,7 @@ using System.Threading.Tasks;
 namespace Client.Hub
 {
     public class ClientMessageHub : IClientMessageHub
-    {
-        private readonly string _brokerUri = "tcp://localhost:61616"; // OpenWire broker URI
-        private readonly string _clientQueueName = "ClientQueue"; // Client's queue name
-        private readonly string _serverQueueName = "ServerQueue"; // Server's queue name
-        
+    {       
         private readonly IQueueRepository _queueRepository;
 
         public ClientMessageHub(IQueueRepository queueRepository)
