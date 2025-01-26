@@ -43,7 +43,7 @@ internal class Program
            .ConfigureServices(services =>
            {
                services.AddDbContext<CarApiDbContext>(options =>
-                    options.UseSqlServer(configuration.GetConnectionString("CarApiConnection")));
+                    options.UseSqlServer(configuration.GetConnectionString("CarDbConnection")));
 
                services.AddTransient<ICarRepository, CarRepository>();
                services.AddTransient<ICompanyRepository, CompanyRepository>();
