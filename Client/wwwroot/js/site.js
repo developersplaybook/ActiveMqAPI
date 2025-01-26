@@ -50,7 +50,7 @@ const carTimerJob = (apiPort) => {
     success: (cars) => {
       if (cars.length === 0) {
         setTimeout(() => carTimerJob(apiPort), oneTenthSecond);
-        console.log("Inga bilar hittade!");
+        console.log("No cars were found!");
         return;
       }
       const selectedItem = Math.floor(Math.random() * cars.length);
@@ -142,7 +142,7 @@ const jobTimer = (apiPort) => {
     success: (jobs) => {
       // Check if jobs object is empty
       if (Object.keys(jobs).length === 0) {
-        console.log("Inga job hittade!");
+        console.log("No jobs found!");
       } else {
         Object.entries(jobs).forEach(([key, job]) => {
           if (!oldJobs[key] || oldJobs[key].status !== job.status) {
