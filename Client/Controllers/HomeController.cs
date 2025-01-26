@@ -30,8 +30,8 @@ namespace Client.Controllers
             try
             {
                 var destinationAddr = Guid.NewGuid();
-                await _serverMessageHub.SendToServerMessageAsync(new GetCompaniesRequest(), destinationAddr);
-                var getCompaniesResponse = await _serverMessageHub.ListenForServerMessageAsync<GetCompaniesResponse>(destinationAddr);
+                await _serverMessageHub.SendMessageToServerAsync(new GetCompaniesRequest(), destinationAddr);
+                var getCompaniesResponse = await _serverMessageHub.ListenForMessageFromServerAsync<GetCompaniesResponse>(destinationAddr);
                 companies = getCompaniesResponse.Companies;
             }
             catch (Exception e)
@@ -42,8 +42,8 @@ namespace Client.Controllers
             }
 
             var correlationId = Guid.NewGuid();
-            await _serverMessageHub.SendToServerMessageAsync(new GetCarsRequest(), correlationId);
-            var getCarsResponse = await _serverMessageHub.ListenForServerMessageAsync<GetCarsResponse>(correlationId);
+            await _serverMessageHub.SendMessageToServerAsync(new GetCarsRequest(), correlationId);
+            var getCarsResponse = await _serverMessageHub.ListenForMessageFromServerAsync<GetCarsResponse>(correlationId);
 
             var allCars = getCarsResponse.Cars.ToList();
 
@@ -52,8 +52,8 @@ namespace Client.Controllers
                 car.Disabled = false; //Enable updates of Online/Offline
 
                 correlationId = Guid.NewGuid();
-                await _serverMessageHub.SendToServerMessageAsync(new UpdateCarRequest(car), correlationId);
-                var updateCarsResponse = await _serverMessageHub.ListenForServerMessageAsync<UpdateCarResponse>(correlationId);
+                await _serverMessageHub.SendMessageToServerAsync(new UpdateCarRequest(car), correlationId);
+                var updateCarsResponse = await _serverMessageHub.ListenForMessageFromServerAsync<UpdateCarResponse>(correlationId);
             }
 
             foreach (var company in companies)

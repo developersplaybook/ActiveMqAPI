@@ -5,7 +5,7 @@ namespace Client.Interfaces
 {
     public interface IClientMessageHub
     {
-        Task SendToServerMessageAsync(object message, Guid correlationId);
-        Task<TResponse> ListenForServerMessageAsync<TResponse>(Guid correlationId);
+        Task SendMessageToServerAsync(object message, Guid correlationId);
+        Task<TResponse> ListenForMessageFromServerAsync<TResponse>(Guid correlationId);
     }
 }

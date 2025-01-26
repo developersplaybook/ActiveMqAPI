@@ -34,16 +34,16 @@ namespace CarClient.Controllers
             if (!_signInManager.IsSignedIn(User)) return RedirectToAction("Index", "Home");
 
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new GetCompaniesRequest(), correlationId);
-            var getCompaniesResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCompaniesResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new GetCompaniesRequest(), correlationId);
+            var getCompaniesResponse = await _clientMessageHub.ListenForMessageFromServerAsync<GetCompaniesResponse>(correlationId);
 
             var companies = getCompaniesResponse.Companies;
 
             foreach (var company in companies)
             {
                 correlationId = Guid.NewGuid();
-                await _clientMessageHub.SendToServerMessageAsync(new GetCarsRequest(), correlationId);
-                var getCarsResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCarsResponse>(correlationId);
+                await _clientMessageHub.SendMessageToServerAsync(new GetCarsRequest(), correlationId);
+                var getCarsResponse = await _clientMessageHub.ListenForMessageFromServerAsync<GetCarsResponse>(correlationId);
 
                 var cars = getCarsResponse.Cars;
                 cars = cars.Where(c => c.CompanyId == company.Id).ToList();
@@ -60,8 +60,8 @@ namespace CarClient.Controllers
         public async Task<IActionResult> Details(Guid id)
         {
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new GetCompanyRequest(id), correlationId);
-            var getCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new GetCompanyRequest(id), correlationId);
+            var getCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<GetCompanyResponse>(correlationId);
 
             var company = getCompanyResponse.Company;
 
@@ -85,8 +85,8 @@ namespace CarClient.Controllers
             company.Id = Guid.NewGuid();
 
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new CreateCompanyRequest(company), correlationId);
-            var creteCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<CreateCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new CreateCompanyRequest(company), correlationId);
+            var creteCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<CreateCompanyResponse>(correlationId);
 
             return RedirectToAction(nameof(Index));
         }
@@ -95,8 +95,8 @@ namespace CarClient.Controllers
         public async Task<IActionResult> Edit(Guid id)
         {
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new GetCompanyRequest(id), correlationId);
-            var getCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new GetCompanyRequest(id), correlationId);
+            var getCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<GetCompanyResponse>(correlationId);
 
             var company = getCompanyResponse.Company;
 
@@ -114,8 +114,8 @@ namespace CarClient.Controllers
             if (!ModelState.IsValid) return View(company);
 
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new GetCompanyRequest(id), correlationId);
-            var getCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new GetCompanyRequest(id), correlationId);
+            var getCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<GetCompanyResponse>(correlationId);
 
             var oldCompany = getCompanyResponse.Company;
 
@@ -123,8 +123,8 @@ namespace CarClient.Controllers
             oldCompany.Address = company.Address;
 
             correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new UpdateCompanyRequest(company), correlationId);
-            var updateCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<UpdateCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new UpdateCompanyRequest(company), correlationId);
+            var updateCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<UpdateCompanyResponse>(correlationId);
 
             return RedirectToAction(nameof(Index));
         }
@@ -133,8 +133,8 @@ namespace CarClient.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new GetCompanyRequest(id), correlationId);
-            var getCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<GetCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new GetCompanyRequest(id), correlationId);
+            var getCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<GetCompanyResponse>(correlationId);
 
             var company = getCompanyResponse.Company;
 
@@ -147,8 +147,8 @@ namespace CarClient.Controllers
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
             var correlationId = Guid.NewGuid();
-            await _clientMessageHub.SendToServerMessageAsync(new DeleteCompanyRequest(id), correlationId);
-            var deleteCompanyResponse = await _clientMessageHub.ListenForServerMessageAsync<DeleteCompanyResponse>(correlationId);
+            await _clientMessageHub.SendMessageToServerAsync(new DeleteCompanyRequest(id), correlationId);
+            var deleteCompanyResponse = await _clientMessageHub.ListenForMessageFromServerAsync<DeleteCompanyResponse>(correlationId);
 
             return RedirectToAction(nameof(Index));
         }

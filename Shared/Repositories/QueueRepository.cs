@@ -40,7 +40,7 @@ public class QueueRepository : IQueueRepository
         return await AddQueueItemAsync(_clientQueueName, entity);
     }
 
-    public async Task<QueueEntity> GetMessageFromServerQueueByCorrelationIdAsync(Guid correlationId)
+    public async Task<QueueEntity> GetMessageFromServerByCorrelationIdAsync(Guid correlationId)
     {
         using var connection = CreateConnection();
         using var session = connection.CreateSession(AcknowledgementMode.AutoAcknowledge);

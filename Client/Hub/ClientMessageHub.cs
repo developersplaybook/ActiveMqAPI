@@ -15,7 +15,7 @@ namespace Client.Hub
         {
             _queueRepository = queueRepository;
         }
-        public async Task SendToServerMessageAsync(object message, Guid correlationId)
+        public async Task SendMessageToServerAsync(object message, Guid correlationId)
         {
             // Serialize the message
             var result = Helpers.ConvertObjectToJson(message);
@@ -35,12 +35,12 @@ namespace Client.Hub
             await _queueRepository.AddClientQueueItemAsync(entity);
         }
 
-        public async Task<TResponse> ListenForServerMessageAsync<TResponse>(Guid correlationId)
+        public async Task<TResponse> ListenForMessageFromServerAsync<TResponse>(Guid correlationId)
         {
             while (true)
             {
                 // Poll the server queue for a message with the matching correlation ID
-                var response = await _queueRepository.GetMessageFromServerQueueByCorrelationIdAsync(correlationId);
+                var response = await _queueRepository.GetMessageFromServerByCorrelationIdAsync(correlationId);
 
                 if (response != null)
                 {
