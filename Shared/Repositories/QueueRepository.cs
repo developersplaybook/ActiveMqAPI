@@ -12,7 +12,7 @@ namespace Shared.Repositories;
 /// <summary>
 /// Handles publishing and consuming messages from ActiveMQ queues.
 /// </summary>
-public class QueueRepository : IQueueRepository
+public class QueueRepository : IClientQueueRepository, IServerQueueRepository
 {
     private readonly string _brokerUri = "tcp://localhost:61616";
     private readonly string _clientQueueName = "ClientQueue";
