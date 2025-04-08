@@ -1,5 +1,6 @@
 ﻿using Apache.NMS;
 using Apache.NMS.ActiveMQ;
+using Shared.Interfaces;
 using Shared.Models;
 using System;
 using System.Text.Json;

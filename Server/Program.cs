@@ -8,6 +8,7 @@ using Server.Hub;
 using Server.Interfaces;
 using Server.Services;
 using Shared.DAL;
+using Shared.Interfaces;
 using Shared.Repositories;
 using System.Globalization;
 using System.Threading.Tasks;

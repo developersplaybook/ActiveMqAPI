@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Server.Interfaces;
 using Shared.Helpers;
+using Shared.Interfaces;
 using Shared.Models;
-using Shared.Repositories;
 using Shared.Requests;
 using Shared.Responses;
 using System;

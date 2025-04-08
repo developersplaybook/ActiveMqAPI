@@ -1,7 +1,7 @@
 ﻿using Client.Interfaces;
 using Shared.Helpers;
+using Shared.Interfaces;
 using Shared.Models;
-using Shared.Repositories;
 using System;
 using System.Threading.Tasks;
 

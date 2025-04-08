@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Shared.DAL;
+using Shared.Interfaces;
 using Shared.Repositories;
 using System;
 using System.Globalization;
